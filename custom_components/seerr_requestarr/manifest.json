@@ -1,10 +1,12 @@
 {
   "domain": "seerr_requestarr",
   "name": "Seerr Requestarr",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "documentation": "https://github.com/berserk88/seerr-requestarr",
   "issue_tracker": "https://github.com/berserk88/seerr-requestarr/issues",
-  "codeowners": ["@berserk88"],
+  "codeowners": [
+    "@berserk88"
+  ],
   "requirements": [],
   "config_flow": true,
   "iot_class": "local_polling",
