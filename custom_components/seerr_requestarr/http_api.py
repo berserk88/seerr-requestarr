@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+from urllib.parse import urlencode, quote
 from typing import Any
 
 from aiohttp import web
@@ -37,31 +38,27 @@ class SeerrProxyView(HomeAssistantView):
 
         entries = hass.config_entries.async_entries(DOMAIN)
         if not entries:
-            _LOGGER.error("Seerr proxy: no config entries found for domain %s", DOMAIN)
             return self._json_error(503, "Seerr Requestarr integration not configured")
 
         api = hass.data.get(DOMAIN, {}).get(entries[0].entry_id)
         if not api:
-            _LOGGER.error("Seerr proxy: api object not found in hass.data[%s]", DOMAIN)
             return self._json_error(503, "Seerr Requestarr API not available")
 
-        # Build the base target URL — no query string appended here
-        target = f"{api._url}/api/v1/{path}"
+        # Build target URL.
+        # Use urlencode(quote_via=quote) so spaces become %20, not +.
+        # aiohttp params= uses urllib which produces + for spaces — Overseerr rejects that.
+        base = f"{api._url}/api/v1/{path}"
+        if request.rel_url.query:
+            qs = urlencode(dict(request.rel_url.query), quote_via=quote)
+            target = f"{base}?{qs}"
+        else:
+            target = base
 
-        # Parse query params from the incoming request and pass them to aiohttp
-        # via params= so aiohttp handles percent-encoding correctly.
-        # DO NOT append request.query_string raw — spaces/special chars cause HTTP 400.
-        params = dict(request.rel_url.query)  # e.g. {"query": "Australian survivor", "page": "1"}
-
-        _LOGGER.warning("Seerr proxy %s %s params=%s", method, target, params)
+        _LOGGER.warning("Seerr proxy %s %s", method, target)
 
         try:
             if method == "GET":
-                # No Content-Type on GET — Overseerr returns 400 if present
-                kwargs: dict[str, Any] = {
-                    "headers": dict(api.get_headers),
-                    "params": params,
-                }
+                kwargs: dict[str, Any] = {"headers": dict(api.get_headers)}
             else:
                 try:
                     body = await request.json()
@@ -73,8 +70,8 @@ class SeerrProxyView(HomeAssistantView):
                 raw = await resp.read()
                 if resp.status >= 400:
                     _LOGGER.warning(
-                        "Seerr proxy upstream %s %s params=%s -> HTTP %s body: %s",
-                        method, target, params, resp.status,
+                        "Seerr proxy upstream %s %s -> HTTP %s body: %s",
+                        method, target, resp.status,
                         raw[:500].decode("utf-8", errors="replace"),
                     )
                 else:
