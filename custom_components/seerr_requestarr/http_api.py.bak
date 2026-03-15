@@ -54,7 +54,7 @@ class SeerrProxyView(HomeAssistantView):
         else:
             target = base
 
-        _LOGGER.debug("Seerr proxy %s %s", method, target)
+        _LOGGER.warning("Seerr proxy %s %s", method, target)
 
         try:
             if method == "GET":
@@ -75,7 +75,7 @@ class SeerrProxyView(HomeAssistantView):
                         raw[:500].decode("utf-8", errors="replace"),
                     )
                 else:
-                    _LOGGER.debug("Seerr proxy %s %s -> HTTP %s", method, target, resp.status)
+                    _LOGGER.warning("Seerr proxy %s %s -> HTTP %s OK", method, target, resp.status)
                 return web.Response(status=resp.status, content_type="application/json", body=raw)
 
         except Exception as err:

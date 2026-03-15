@@ -27,7 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class SeerrCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, api):
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(minutes=10))
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(minutes=5))
         self.api = api
 
     async def _async_update_data(self):

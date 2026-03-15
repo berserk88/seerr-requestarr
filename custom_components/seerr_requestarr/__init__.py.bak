@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         media_type = call.data.get("media_type")
         media_id   = call.data.get("media_id")
         result = await api.request_media(media_type, media_id)
-        _LOGGER.debug("Seerr request result: %s", result)
+        _LOGGER.info("Seerr request result: %s", result)
 
     async def handle_search(call):
         query   = call.data.get("query")
