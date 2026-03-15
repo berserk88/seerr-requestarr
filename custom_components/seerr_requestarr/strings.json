@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Overseerr",
+        "description": "Enter your Overseerr details. API key is in Overseerr → Settings → General.",
+        "data": {
+          "url": "Overseerr URL (e.g. http://192.168.1.100:5055)",
+          "api_key": "API Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the URL and that Overseerr is running.",
+      "invalid_auth": "Invalid API key.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "Seerr Requestarr is already configured."
+    }
+  }
+}
