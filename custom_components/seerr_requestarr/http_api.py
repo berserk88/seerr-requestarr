@@ -45,32 +45,37 @@ class SeerrProxyView(HomeAssistantView):
             _LOGGER.error("Seerr proxy: api object not found in hass.data[%s]", DOMAIN)
             return self._json_error(503, "Seerr Requestarr API not available")
 
-        # Build target URL
+        # Build the base target URL — no query string appended here
         target = f"{api._url}/api/v1/{path}"
-        if request.query_string:
-            target += f"?{request.query_string}"
 
-        _LOGGER.warning("Seerr proxy %s %s", method, target)
+        # Parse query params from the incoming request and pass them to aiohttp
+        # via params= so aiohttp handles percent-encoding correctly.
+        # DO NOT append request.query_string raw — spaces/special chars cause HTTP 400.
+        params = dict(request.rel_url.query)  # e.g. {"query": "Australian survivor", "page": "1"}
+
+        _LOGGER.warning("Seerr proxy %s %s params=%s", method, target, params)
 
         try:
             if method == "GET":
-                # CRITICAL: no Content-Type on GET — Overseerr returns 400 if present
-                headers = dict(api.get_headers)
-                kwargs: dict[str, Any] = {"headers": headers}
+                # No Content-Type on GET — Overseerr returns 400 if present
+                kwargs: dict[str, Any] = {
+                    "headers": dict(api.get_headers),
+                    "params": params,
+                }
             else:
-                headers = dict(api.post_headers)
                 try:
                     body = await request.json()
-                    kwargs = {"headers": headers, "json": body}
+                    kwargs = {"headers": dict(api.post_headers), "json": body}
                 except Exception:
-                    kwargs = {"headers": headers, "data": await request.read()}
+                    kwargs = {"headers": dict(api.post_headers), "data": await request.read()}
 
             async with api._session.request(method, target, **kwargs) as resp:
                 raw = await resp.read()
                 if resp.status >= 400:
                     _LOGGER.warning(
-                        "Seerr proxy upstream %s %s -> HTTP %s body: %s",
-                        method, target, resp.status, raw[:500].decode("utf-8", errors="replace")
+                        "Seerr proxy upstream %s %s params=%s -> HTTP %s body: %s",
+                        method, target, params, resp.status,
+                        raw[:500].decode("utf-8", errors="replace"),
                     )
                 else:
                     _LOGGER.warning("Seerr proxy %s %s -> HTTP %s OK", method, target, resp.status)
@@ -90,7 +95,7 @@ class SeerrProxyView(HomeAssistantView):
 
 
 class SeerrDebugView(HomeAssistantView):
-    """Debug endpoint — call /api/seerr_debug to verify proxy config."""
+    """Debug endpoint — visit /api/seerr_debug to verify proxy config."""
 
     url = "/api/seerr_debug"
     name = "api:seerr_debug"
@@ -112,7 +117,6 @@ class SeerrDebugView(HomeAssistantView):
             "api_loaded": api is not None,
             "overseerr_url": api._url if api else None,
         }
-        # Try a live status call
         if api:
             try:
                 s = await api.get_status()
