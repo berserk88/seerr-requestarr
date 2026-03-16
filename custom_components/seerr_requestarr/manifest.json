@@ -1,7 +1,7 @@
 {
   "domain": "seerr_requestarr",
   "name": "Seerr Requestarr",
-  "version": "1.3.0",
+  "version": "0.5",
   "documentation": "https://github.com/berserk88/seerr-requestarr",
   "issue_tracker": "https://github.com/berserk88/seerr-requestarr/issues",
   "codeowners": [

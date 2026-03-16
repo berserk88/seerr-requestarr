@@ -18,6 +18,15 @@ PLATFORMS = ["sensor"]
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.data.setdefault(DOMAIN, {})
     async_register_views(hass)
+    # Serve the integration icon so it appears in Devices & Services
+    import pathlib
+    icon_path = pathlib.Path(__file__).parent / "icon.png"
+    if icon_path.exists():
+        hass.http.register_static_path(
+            f"/static/icons/brands/{DOMAIN}.png",
+            str(icon_path),
+            cache_headers=True,
+        )
     return True
 
 
