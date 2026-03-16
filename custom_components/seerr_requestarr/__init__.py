@@ -22,11 +22,14 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     import pathlib
     icon_path = pathlib.Path(__file__).parent / "icon.png"
     if icon_path.exists():
-        hass.http.register_static_path(
-            f"/static/icons/brands/{DOMAIN}.png",
-            str(icon_path),
-            cache_headers=True,
-        )
+        from homeassistant.components.http import StaticPathConfig
+        await hass.http.async_register_static_paths([
+            StaticPathConfig(
+                f"/static/icons/brands/{DOMAIN}.png",
+                str(icon_path),
+                cache_headers=True,
+            )
+        ])
     return True
 
 
