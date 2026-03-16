@@ -19,6 +19,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     api = hass.data[DOMAIN][entry.entry_id]
     coordinator = SeerrCoordinator(hass, api)
     await coordinator.async_config_entry_first_refresh()
+    coordinator.async_setup_listeners(entry)
     async_add_entities([
         SeerrPendingSensor(coordinator, entry),
         SeerrTotalSensor(coordinator, entry),
@@ -29,6 +30,13 @@ class SeerrCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, api):
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(minutes=10))
         self.api = api
+
+    def async_setup_listeners(self, entry) -> None:
+        """Subscribe to request events for immediate refresh."""
+        async def _on_request(event):
+            await self.async_request_refresh()
+
+        self.hass.bus.async_listen(f"{DOMAIN}_request_made", _on_request)
 
     async def _async_update_data(self):
         try:

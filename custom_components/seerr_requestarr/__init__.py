@@ -43,6 +43,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         media_id   = call.data.get("media_id")
         result = await api.request_media(media_type, media_id)
         _LOGGER.debug("Seerr request result: %s", result)
+        # Fire event so the coordinator refreshes sensors immediately
+        hass.bus.async_fire(f"{DOMAIN}_request_made")
 
     async def handle_search(call):
         query   = call.data.get("query")
